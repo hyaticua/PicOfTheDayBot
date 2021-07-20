@@ -4,7 +4,7 @@
 1. Install Python
 2. `pip install -r requirements.txt`
 3. Open config.json
-    - set image directory (relative or absolute) 
+    - set image directory (relative or absolute, create directory if it doesn't exist!)
     - post time in 24hr HH:MM:SS format
     - configure API key, see section below
 4. Once configured, run bot with `python potdbot.py`
