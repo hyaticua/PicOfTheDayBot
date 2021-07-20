@@ -1,0 +1,9 @@
+{
+    "api_key" : "",
+    "default_caption" : "Pic of the day!",
+    "post_time" : "12:00:00",
+    "post_channel": "general",
+
+    "image_dir": "images",
+    "posted_images_cache": "posted_images.txt"
+}
