@@ -29,7 +29,7 @@ class PotdBot(discord.Client):
         self.init_config()
         self.init_posted_images_cache()
         self.scan_images()
-        self.init_post_scheduler(self.calc_delta_seconds(self.post_time))
+        self.init_post_scheduler(seconds=self.calc_delta_seconds(self.post_time))
 
     def init_config(self):
         try:
@@ -55,8 +55,8 @@ class PotdBot(discord.Client):
             b = b.shift(days=+1)
         return (b - a).seconds
 
-    def init_post_scheduler(self, sec):
-        self.post_image_task = tasks.Loop(self._post_random_image, sec, 0, 0, None, True, None)
+    def init_post_scheduler(self, seconds=0, minutes=0, hours=0):
+        self.post_image_task = tasks.Loop(self._post_random_image, seconds, hours, minutes, None, True, None)
         self.post_image_task.start()
 
     def get_default_post_channel(self):
@@ -80,14 +80,14 @@ class PotdBot(discord.Client):
     async def on_guild_join(self, guild):
         print(f'Bot has joined server {guild.name}')
 
-    async def on_message(self, message):
-        # ignore bot sent messages
-        if message.author == self.user:
-            return
+    # async def on_message(self, message):
+    #     # ignore bot sent messages
+    #     if message.author == self.user:
+    #         return
 
-        if message.content.startswith(self.bot_invocation_str):
-            tokens = message.content.split(' ')
-            await self.post_random_image(message.channel)
+    #     if message.content.startswith(self.bot_invocation_str):
+    #         tokens = message.content.split(' ')
+    #         await self.post_random_image(message.channel)
 
     def scan_images(self):
         for f in os.listdir(self.image_dir):
@@ -116,8 +116,7 @@ class PotdBot(discord.Client):
             await self.post_random_image(self.post_channel)
 
             self.post_image_task.cancel()
-            self.post_image_task = tasks.Loop(self._post_random_image, 0, 0, 1, None, True, None)
-            self.post_image_task.start()
+            self.init_post_scheduler(hours=24)
             self.has_initialized = False
         else:
             self.has_initialized = True
@@ -130,7 +129,10 @@ class PotdBot(discord.Client):
         idx = random.randint(0, len(self.image_paths) - 1)
         image_path = self.image_paths.pop(idx)
         await self.send_image(channel, os.path.join(self.image_dir, image_path), self.default_caption)
+
+        self.already_posted.append(image_path)
         print(f'Posted image: {image_path}\n')
+
         try:
             async with aiofiles.open(self.posted_image_cache_filename, mode=self.cache_open_mode) as fp:
                 await fp.write(image_path +'\n')
